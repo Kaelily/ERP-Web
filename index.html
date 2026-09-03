@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azurra System - Gestão Empresarial</title>
+    <script>
+        var path = window.location.pathname;
+        var base = path.toLowerCase().startsWith('/erp-web') ? '/ERP-Web/' : '/';
+        document.write('<base href="' + base + '" />');
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="images/azurra-logo.png" />
+    <link href="ERP.Client.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif;">
+            <img src="images/azurra-logo.png" alt="Azurra System" style="height: 60px; margin-bottom: 20px; object-fit: contain;" />
+            <div style="width: 48px; height: 48px; border: 4px solid #334155; border-top: 4px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 16px;">Carregando Azurra System...</p>
+        </div>
+        <style>
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+    </div>
+
+    <div id="blazor-error-ui">
+        Ocorreu um erro não tratado na aplicação.
+        <a href="." class="reload">Recarregar</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>
