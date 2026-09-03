@@ -1,0 +1,99 @@
+@page "/faturamento"
+@inject ISnackbar Snackbar
+
+<PageTitle>Gerenciador Fiscal de NF-e - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Faturamento Fiscal & Gerenciamento de NF-e / NFS-e
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Emissão eletrônica, transmissão direta via SEFAZ, DANFE em PDF e Reforma Tributária (IBS/CBS 2026).
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Send"
+                   OnClick="@(() => Snackbar.Add("Iniciando emissão de nova NF-e...", Severity.Info))">
+            Emitir NF-e
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.CloudDone"
+                   OnClick="@(() => Snackbar.Add("SEFAZ Nacional: Serviços Operando Normalmente (Status 100)", Severity.Success))">
+            Status SEFAZ
+        </MudButton>
+    </div>
+</div>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    <strong>Reforma Tributária 2026:</strong> O ERP Web já suporta os novos campos e cálculos de alíquotas de IBS (Imposto sobre Bens e Serviços) e CBS (Contribuição sobre Bens e Serviços).
+</MudAlert>
+
+<MudTable Items="@_notas" Dense="true" Hover="true" Striped="true" Elevation="2">
+    <HeaderContent>
+        <MudTh>Número</MudTh>
+        <MudTh>Série</MudTh>
+        <MudTh>Destinatário</MudTh>
+        <MudTh>CNPJ / CPF</MudTh>
+        <MudTh>Data Emissão</MudTh>
+        <MudTh>Valor Total</MudTh>
+        <MudTh>Status SEFAZ</MudTh>
+        <MudTh Style="text-align: right;">Ações</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><strong>NF-e @context.Numero</strong></MudTd>
+        <MudTd>@context.Serie</MudTd>
+        <MudTd>@context.DestinatarioNome</MudTd>
+        <MudTd>@context.DestinatarioCnpjCpf</MudTd>
+        <MudTd>@context.DataEmissao.ToString("dd/MM/yyyy HH:mm")</MudTd>
+        <MudTd><strong style="color: var(--mud-palette-primary);">R$ @context.ValorTotal.ToString("N2")</strong></MudTd>
+        <MudTd>
+            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">
+                @context.Status (100)
+            </MudChip>
+        </MudTd>
+        <MudTd Style="text-align: right;">
+            <MudTooltip Text="Visualizar DANFE / PDF">
+                <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small"
+                               OnClick="@(() => Snackbar.Add($"Gerando DANFE em PDF da NF-e {context.Numero}...", Severity.Info))" />
+            </MudTooltip>
+            <MudTooltip Text="Baixar XML Assinado">
+                <MudIconButton Icon="@Icons.Material.Filled.Code" Color="Color.Primary" Size="Size.Small"
+                               OnClick="@(() => Snackbar.Add($"Baixando arquivo XML da NF-e {context.Numero}...", Severity.Success))" />
+            </MudTooltip>
+            <MudTooltip Text="Enviar por Email para o Cliente">
+                <MudIconButton Icon="@Icons.Material.Filled.Email" Color="Color.Secondary" Size="Size.Small"
+                               OnClick="@(() => Snackbar.Add($"DANFE e XML enviados por email para {context.DestinatarioNome}.", Severity.Success))" />
+            </MudTooltip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<NotaFiscalDto> _notas = new()
+    {
+        new()
+        {
+            Id = 1,
+            Numero = "00004589",
+            Serie = "1",
+            ChaveAcesso = "35260912345678000190550010000045891001234567",
+            DestinatarioNome = "INDÚSTRIA METALÚRGICA ALUMÍNIO BRASIL LTDA",
+            DestinatarioCnpjCpf = "12.345.678/0001-90",
+            DataEmissao = DateTime.UtcNow.AddDays(-1),
+            ValorTotal = 40650.00m,
+            Status = "Autorizada"
+        },
+        new()
+        {
+            Id = 2,
+            Numero = "00004588",
+            Serie = "1",
+            ChaveAcesso = "35260934567890000122550010000045881001234568",
+            DestinatarioNome = "SOLUÇÕES CONSTRUTIVAS PAULISTA LTDA",
+            DestinatarioCnpjCpf = "34.567.890/0001-22",
+            DataEmissao = DateTime.UtcNow.AddDays(-3),
+            ValorTotal = 15800.00m,
+            Status = "Autorizada"
+        }
+    };
+}

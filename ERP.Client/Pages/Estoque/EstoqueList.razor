@@ -1,0 +1,75 @@
+@page "/estoque/produtos"
+@inject EstoqueService EstoqueService
+@inject ISnackbar Snackbar
+
+<PageTitle>Estoque e Produtos - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Estoque de Produtos & Matérias-Primas
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Controle de saldo em estoque, custos médios, preços de venda e alertas de estoque mínimo.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Snackbar.Add("Abertura do formulário de produto...", Severity.Info))">
+            Novo Produto
+        </MudButton>
+    </div>
+</div>
+
+<MudTable Items="@_produtos" Dense="true" Hover="true" Striped="true" Elevation="2">
+    <HeaderContent>
+        <MudTh>Código</MudTh>
+        <MudTh>Descrição</MudTh>
+        <MudTh>Grupo</MudTh>
+        <MudTh>NCM</MudTh>
+        <MudTh>Unidade</MudTh>
+        <MudTh>Custo Médio</MudTh>
+        <MudTh>Preço de Venda</MudTh>
+        <MudTh>Saldo em Estoque</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><strong>@context.Codigo</strong></MudTd>
+        <MudTd>@context.Descricao</MudTd>
+        <MudTd><MudChip T="string" Size="Size.Small" Variant="Variant.Text">@context.Grupo</MudChip></MudTd>
+        <MudTd>@context.Ncm</MudTd>
+        <MudTd>@context.Unidade</MudTd>
+        <MudTd>R$ @context.PrecoCusto.ToString("N2")</MudTd>
+        <MudTd><strong style="color: var(--mud-palette-primary);">R$ @context.PrecoVenda.ToString("N2")</strong></MudTd>
+        <MudTd>
+            <div class="d-flex align-center gap-1">
+                <strong>@context.EstoqueAtual.ToString("N0")</strong>
+                @if (context.EstoqueAtual <= context.EstoqueMinimo)
+                {
+                    <MudTooltip Text="Abaixo do Estoque Mínimo!">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small" />
+                    </MudTooltip>
+                }
+            </div>
+        </MudTd>
+        <MudTd>
+            @if (context.Ativo)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Ativo</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">Inativo</MudChip>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<ProdutoDto> _produtos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _produtos = await EstoqueService.GetProdutosAsync();
+    }
+}

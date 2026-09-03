@@ -1,0 +1,43 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <ERP.Client.Pages.Auth.Login />
+                    }
+                    else
+                    {
+                        <div class="pa-8 text-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Block" Color="Color.Error" Size="Size.Large" Class="mb-4" />
+                            <MudText Typo="Typo.h5" Color="Color.Error">Acesso Não Autorizado</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-2 text-secondary">
+                                Seu perfil de usuário não possui permissão para acessar este módulo ou recurso.
+                            </MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" Class="mt-4">
+                                Voltar ao Início
+                            </MudButton>
+                        </div>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Não Encontrado - ERP Web</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div class="pa-8 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SearchOff" Color="Color.Warning" Size="Size.Large" Class="mb-4" />
+                    <MudText Typo="Typo.h4">Página Não Encontrada</MudText>
+                    <MudText Typo="Typo.body1" Class="mt-2 text-secondary">
+                        A rota informada não corresponde a nenhuma página ou tela cadastrada no ERP Web.
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" Class="mt-4">
+                        Voltar ao Início
+                    </MudButton>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

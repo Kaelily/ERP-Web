@@ -1,0 +1,71 @@
+@page "/sistema/audit"
+@inject SistemaService SistemaService
+@inject ISnackbar Snackbar
+
+<PageTitle>Audit Trail (Auditoria) - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Trilha de Auditoria (Audit Trail)
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Registro imutável de todas as operações críticas, inclusões, alterações e exclusões do sistema.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="LoadLogsAsync">
+            Atualizar Logs
+        </MudButton>
+    </div>
+</div>
+
+<MudTable Items="@_logs" Dense="true" Hover="true" Striped="true" Elevation="2">
+    <HeaderContent>
+        <MudTh>Data e Hora (UTC)</MudTh>
+        <MudTh>Usuário</MudTh>
+        <MudTh>Módulo</MudTh>
+        <MudTh>Entidade</MudTh>
+        <MudTh>Operação</MudTh>
+        <MudTh>Registro Afetado</MudTh>
+        <MudTh>Detalhes da Ação</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.DataHora.ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
+        <MudTd><strong>@(context.UsuarioNome ?? "Sistema")</strong></MudTd>
+        <MudTd><MudChip T="string" Size="Size.Small" Variant="Variant.Text">@context.Modulo</MudChip></MudTd>
+        <MudTd>@context.Entidade</MudTd>
+        <MudTd>
+            <MudChip T="string" Size="Size.Small" Color="@GetOperacaoColor(context.Operacao)" Variant="Variant.Filled">
+                @context.Operacao
+            </MudChip>
+        </MudTd>
+        <MudTd>@(context.RegistroId ?? "-")</MudTd>
+        <MudTd>@context.Detalhes</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<AuditLogDto> _logs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogsAsync();
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        _logs = await SistemaService.GetAuditLogsAsync();
+    }
+
+    private Color GetOperacaoColor(string operacao) => operacao?.ToLower() switch
+    {
+        "create" => Color.Success,
+        "update" => Color.Warning,
+        "delete" => Color.Error,
+        "inactivate" => Color.Error,
+        "reactivate" => Color.Info,
+        _ => Color.Primary
+    };
+}

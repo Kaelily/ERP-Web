@@ -1,0 +1,202 @@
+@page "/comercial/crm"
+@inject ComercialService ComercialService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>CRM Pipeline - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Funil Comercial (CRM Kanban)
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Pipeline de oportunidades: Prospecção → Proposta → Negociação → Fechado.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenNewOpportunityDialog">
+            Nova Oportunidade
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="LoadOpportunitiesAsync">
+            Atualizar
+        </MudButton>
+    </div>
+</div>
+
+<MudGrid Spacing="3">
+    <!-- COLUNA 1: PROSPECÇÃO -->
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Elevation="2" Class="pa-3" Style="background: rgba(59, 130, 246, 0.05); border-top: 4px solid var(--mud-palette-info);">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">1. Prospecção</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                    @_prospeccaoItems.Count (R$ @_prospeccaoItems.Sum(x => x.ValorEstimado).ToString("N0"))
+                </MudChip>
+            </div>
+
+            @foreach (var op in _prospeccaoItems)
+            {
+                <MudCard Elevation="1" Class="mb-3 erp-card-elevated">
+                    <MudCardContent Class="pa-3">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">@op.Titulo</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mb-2">@op.ClienteNome</MudText>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
+                                R$ @op.ValorEstimado.ToString("N2")
+                            </MudText>
+                            <MudText Typo="Typo.caption">@op.ProbabilidadePct%</MudText>
+                        </div>
+                        <MudProgressLinear Value="@op.ProbabilidadePct" Color="Color.Info" Size="Size.Small" Class="my-1" />
+                    </MudCardContent>
+                    <MudCardActions Class="pa-2 d-flex justify-space-between">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@op.Responsavel</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Proposta))" />
+                    </MudCardActions>
+                </MudCard>
+            }
+        </MudPaper>
+    </MudItem>
+
+    <!-- COLUNA 2: PROPOSTA -->
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Elevation="2" Class="pa-3" Style="background: rgba(245, 158, 11, 0.05); border-top: 4px solid var(--mud-palette-warning);">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">2. Proposta</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Warning">
+                    @_propostaItems.Count (R$ @_propostaItems.Sum(x => x.ValorEstimado).ToString("N0"))
+                </MudChip>
+            </div>
+
+            @foreach (var op in _propostaItems)
+            {
+                <MudCard Elevation="1" Class="mb-3 erp-card-elevated">
+                    <MudCardContent Class="pa-3">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">@op.Titulo</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mb-2">@op.ClienteNome</MudText>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2" Color="Color.Warning" Style="font-weight: 700;">
+                                R$ @op.ValorEstimado.ToString("N2")
+                            </MudText>
+                            <MudText Typo="Typo.caption">@op.ProbabilidadePct%</MudText>
+                        </div>
+                        <MudProgressLinear Value="@op.ProbabilidadePct" Color="Color.Warning" Size="Size.Small" Class="my-1" />
+                    </MudCardContent>
+                    <MudCardActions Class="pa-2 d-flex justify-space-between">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Color="Color.Default"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Prospeccao))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Negociacao))" />
+                    </MudCardActions>
+                </MudCard>
+            }
+        </MudPaper>
+    </MudItem>
+
+    <!-- COLUNA 3: NEGOCIAÇÃO -->
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Elevation="2" Class="pa-3" Style="background: rgba(13, 148, 136, 0.05); border-top: 4px solid var(--mud-palette-secondary);">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">3. Negociação</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">
+                    @_negociacaoItems.Count (R$ @_negociacaoItems.Sum(x => x.ValorEstimado).ToString("N0"))
+                </MudChip>
+            </div>
+
+            @foreach (var op in _negociacaoItems)
+            {
+                <MudCard Elevation="1" Class="mb-3 erp-card-elevated">
+                    <MudCardContent Class="pa-3">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">@op.Titulo</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mb-2">@op.ClienteNome</MudText>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Style="font-weight: 700;">
+                                R$ @op.ValorEstimado.ToString("N2")
+                            </MudText>
+                            <MudText Typo="Typo.caption">@op.ProbabilidadePct%</MudText>
+                        </div>
+                        <MudProgressLinear Value="@op.ProbabilidadePct" Color="Color.Secondary" Size="Size.Small" Class="my-1" />
+                    </MudCardContent>
+                    <MudCardActions Class="pa-2 d-flex justify-space-between">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Color="Color.Default"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Proposta))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Fechado))" />
+                    </MudCardActions>
+                </MudCard>
+            }
+        </MudPaper>
+    </MudItem>
+
+    <!-- COLUNA 4: FECHADO / GANHO -->
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Elevation="2" Class="pa-3" Style="background: rgba(16, 185, 129, 0.05); border-top: 4px solid var(--mud-palette-success);">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">4. Fechado / Ganho</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                    @_fechadoItems.Count (R$ @_fechadoItems.Sum(x => x.ValorEstimado).ToString("N0"))
+                </MudChip>
+            </div>
+
+            @foreach (var op in _fechadoItems)
+            {
+                <MudCard Elevation="1" Class="mb-3 erp-card-elevated" Style="border: 1px solid var(--mud-palette-success);">
+                    <MudCardContent Class="pa-3">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">@op.Titulo</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mb-2">@op.ClienteNome</MudText>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2" Color="Color.Success" Style="font-weight: 700;">
+                                R$ @op.ValorEstimado.ToString("N2")
+                            </MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">100% Ganho</MudChip>
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions Class="pa-2 d-flex justify-space-between">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@op.Responsavel</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Color="Color.Default"
+                                       OnClick="@(() => MoveStatus(op, StatusCrm.Negociacao))" />
+                    </MudCardActions>
+                </MudCard>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<OportunidadeCrmDto> _items = new();
+
+    private List<OportunidadeCrmDto> _prospeccaoItems => _items.Where(x => x.Status == StatusCrm.Prospeccao).ToList();
+    private List<OportunidadeCrmDto> _propostaItems => _items.Where(x => x.Status == StatusCrm.Proposta).ToList();
+    private List<OportunidadeCrmDto> _negociacaoItems => _items.Where(x => x.Status == StatusCrm.Negociacao).ToList();
+    private List<OportunidadeCrmDto> _fechadoItems => _items.Where(x => x.Status == StatusCrm.Fechado).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOpportunitiesAsync();
+    }
+
+    private async Task LoadOpportunitiesAsync()
+    {
+        _items = await ComercialService.GetOportunidadesAsync();
+    }
+
+    private async Task MoveStatus(OportunidadeCrmDto op, StatusCrm novoStatus)
+    {
+        op.Status = novoStatus;
+        if (novoStatus == StatusCrm.Fechado) op.ProbabilidadePct = 100;
+        else if (novoStatus == StatusCrm.Negociacao) op.ProbabilidadePct = 80;
+        else if (novoStatus == StatusCrm.Proposta) op.ProbabilidadePct = 50;
+        else op.ProbabilidadePct = 25;
+
+        await ComercialService.UpdateStatusOportunidadeAsync(op.Id, novoStatus);
+        Snackbar.Add($"Oportunidade movida para {novoStatus}!", Severity.Success);
+    }
+
+    private void OpenNewOpportunityDialog()
+    {
+        Snackbar.Add("Para criar nova oportunidade, acesse a aba 'Ações' do Mailing ou utilize o atalho de vendas.", Severity.Info);
+    }
+}

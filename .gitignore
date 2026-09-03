@@ -1,0 +1,22 @@
+## Ignore Visual Studio & .NET temporary files, build outputs, and user settings
+[Bb]in/
+[Oo]bj/
+dist/
+.vs/
+.idea/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.user
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

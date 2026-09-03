@@ -1,0 +1,890 @@
+@page "/comercial/mailing/{Id:int?}"
+@page "/comercial/mailing/novo"
+@inject IMailingService MailingService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>@(IsNew ? "Novo Cadastro de Mailing" : $"Mailing #{Id} - {_model.RazaoSocial ?? _model.NomeCompleto}") - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudBreadcrumbs Items="_breadcrumbItems" Class="pa-0 mb-1" />
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            @(IsNew ? "Novo Cadastro de Mailing" : $"Mailing #{Id} · {(_model.TipoPessoa == TipoPessoa.Juridica ? _model.RazaoSocial : _model.NomeCompleto)}")
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Nav.NavigateTo("/comercial/mailing"))">
+            Voltar
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveMailingAsync" Disabled="@_saving">
+            @(_saving ? "Salvando..." : "Salvar Cadastro")
+        </MudButton>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex justify-center align-center pa-12">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    </div>
+}
+else
+{
+    <MudForm @ref="_form">
+        <!-- CABEÇALHO PRINCIPAL DO CADASTRO -->
+        <MudPaper Elevation="2" Class="pa-4 mb-4">
+            <div class="d-flex flex-wrap gap-4 align-center justify-space-between mb-4">
+                <!-- FLAGS DE TIPO DE CADASTRO -->
+                <div class="d-flex flex-wrap gap-3 align-center">
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Classificação:</MudText>
+                    <MudCheckBox @bind-Value="_model.IsCliente" Label="Cliente" Color="Color.Primary" Dense="true" />
+                    <MudCheckBox @bind-Value="_model.IsFornecedor" Label="Fornecedor" Color="Color.Secondary" Dense="true" />
+                    <MudCheckBox @bind-Value="_model.IsTransportadora" Label="Transportadora" Color="Color.Info" Dense="true" />
+                    <MudCheckBox @bind-Value="_model.IsIntermediador" Label="Intermediador" Color="Color.Default" Dense="true" />
+                    <MudCheckBox @bind-Value="_model.IsFuncionario" Label="Funcionário / Vendedor" Color="Color.Warning" Dense="true" />
+                </div>
+
+                <div class="d-flex gap-2 align-center">
+                    <MudCheckBox @bind-Value="_model.Inativo" Label="Cadastro Inativo" Color="Color.Error" Dense="true" />
+                </div>
+            </div>
+
+            <MudDivider Class="my-3" />
+
+            <MudGrid Spacing="2">
+                <!-- TIPO DE PESSOA -->
+                <MudItem xs="12" sm="3" md="2">
+                    <MudSelect @bind-Value="_model.TipoPessoa" Label="Tipo de Pessoa" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="TipoPessoa.Juridica">Jurídica (PJ)</MudSelectItem>
+                        <MudSelectItem Value="TipoPessoa.Fisica">Física (PF)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                @if (_model.TipoPessoa == TipoPessoa.Juridica)
+                {
+                    <MudItem xs="12" sm="5" md="4">
+                        <MudTextField @bind-Value="_model.RazaoSocial" Label="Razão Social *" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      Required="true" RequiredError="Informe a Razão Social." />
+                    </MudItem>
+                    <MudItem xs="12" sm="4" md="3">
+                        <MudTextField @bind-Value="_model.NomeFantasia" Label="Nome Fantasia" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div class="d-flex gap-1">
+                            <MudTextField @bind-Value="_model.Cnpj" Label="CNPJ (14 dígitos)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            <MudTooltip Text="Consultar CNPJ na Receita Federal (ReceitaWS)">
+                                <MudIconButton Icon="@Icons.Material.Filled.Search" Color="Color.Primary" Size="Size.Small"
+                                               OnClick="BuscarCnpjAsync" Style="margin-top: 4px;" />
+                            </MudTooltip>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="3" md="2">
+                        <MudTextField @bind-Value="_model.Ie" Label="Inscrição Estadual" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3" md="2">
+                        <MudTextField @bind-Value="_model.Im" Label="Inscrição Municipal" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3" md="2">
+                        <MudSelect @bind-Value="_model.IndIe" Label="Indicador IE" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            <MudSelectItem Value="IndIe.ContribuinteICMS">1 - Contribuinte ICMS</MudSelectItem>
+                            <MudSelectItem Value="IndIe.ContribuinteIsento">2 - Contribuinte Isento</MudSelectItem>
+                            <MudSelectItem Value="IndIe.NaoContribuinte">9 - Não Contribuinte</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="3" md="3">
+                        <MudSelect @bind-Value="_model.RegimeTributario" Label="Regime Tributário" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            <MudSelectItem Value="@((RegimeTributario?)RegimeTributario.SimplesNacional)">Simples Nacional (SN)</MudSelectItem>
+                            <MudSelectItem Value="@((RegimeTributario?)RegimeTributario.LucroPresumido)">Lucro Presumido (LP)</MudSelectItem>
+                            <MudSelectItem Value="@((RegimeTributario?)RegimeTributario.LucroReal)">Lucro Real (LR)</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12" sm="6" md="5">
+                        <MudTextField @bind-Value="_model.NomeCompleto" Label="Nome Completo *" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      Required="true" RequiredError="Informe o Nome Completo." />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField @bind-Value="_model.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4" md="2">
+                        <MudTextField @bind-Value="_model.Rg" Label="RG" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4" md="2">
+                        <MudTextField @bind-Value="_model.Rne" Label="RNE (Estrangeiro)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+
+        <!-- AS 10 ABAS ESPECIFICADAS NA SEÇÃO 5.4 DO PROMPT TÉCNICO -->
+        <MudPaper Elevation="2" Class="pa-2">
+            <MudTabs @bind-ActivePanelIndex="_tabIndex" Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+                
+                <!-- ABA 1: ENDEREÇOS E CONTATOS -->
+                <MudTabPanel Text="Endereços e Contatos" Icon="@Icons.Material.Filled.ContactMail">
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Endereços Cadastrados</MudText>
+                    
+                    <MudTable Items="@_model.Enderecos" Dense="true" Hover="true" Striped="true" Elevation="1" Class="mb-4">
+                        <HeaderContent>
+                            <MudTh>Tipo</MudTh>
+                            <MudTh>CEP</MudTh>
+                            <MudTh>Logradouro & Número</MudTh>
+                            <MudTh>Complemento / Bairro</MudTh>
+                            <MudTh>Cidade - UF</MudTh>
+                            <MudTh>Principal</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.TipoEnd</MudTd>
+                            <MudTd>@context.Cep</MudTd>
+                            <MudTd>@context.Logradouro, @context.Numero</MudTd>
+                            <MudTd>@context.Complemento @(string.IsNullOrEmpty(context.Complemento) ? "" : " - ") @context.Bairro</MudTd>
+                            <MudTd>@context.Cidade - @context.Estado</MudTd>
+                            <MudTd>@(context.Principal ? "Sim" : "Não")</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.Enderecos.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <!-- ADICIONAR NOVO ENDEREÇO -->
+                    <MudPaper Elevation="1" Class="pa-3 mb-6" Style="background: var(--mud-palette-background);">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Adicionar Endereço</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="3">
+                                <MudSelect @bind-Value="_novoEndereco.TipoEnd" Label="Tipo de Endereço" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                    <MudSelectItem Value="TipoEndereco.Faturamento">Faturamento</MudSelectItem>
+                                    <MudSelectItem Value="TipoEndereco.Cobranca">Cobrança</MudSelectItem>
+                                    <MudSelectItem Value="TipoEndereco.RetiradaEntrega">Retirada / Entrega</MudSelectItem>
+                                    <MudSelectItem Value="TipoEndereco.Correspondencia">Correspondência</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <div class="d-flex gap-1">
+                                    <MudTextField @bind-Value="_novoEndereco.Cep" Label="CEP (8 dígitos)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                    <MudTooltip Text="Buscar CEP no ViaCEP">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Search" Color="Color.Primary" Size="Size.Small"
+                                                       OnClick="BuscarCepAsync" Style="margin-top: 4px;" />
+                                    </MudTooltip>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField @bind-Value="_novoEndereco.Logradouro" Label="Logradouro" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="2">
+                                <MudTextField @bind-Value="_novoEndereco.Numero" Label="Número" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTextField @bind-Value="_novoEndereco.Complemento" Label="Complemento" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTextField @bind-Value="_novoEndereco.Bairro" Label="Bairro" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTextField @bind-Value="_novoEndereco.Cidade" Label="Cidade" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="1">
+                                <MudTextField @bind-Value="_novoEndereco.Estado" Label="UF" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="2" Class="d-flex align-center justify-end">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                           OnClick="AddEndereco">
+                                    Adicionar
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                    <MudDivider Class="my-4" />
+
+                    <!-- CONTATOS -->
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Contatos da Empresa</MudText>
+                    <MudTable Items="@_model.Contatos" Dense="true" Hover="true" Striped="true" Elevation="1" Class="mb-4">
+                        <HeaderContent>
+                            <MudTh>Nome</MudTh>
+                            <MudTh>Cargo</MudTh>
+                            <MudTh>Tel Comercial</MudTh>
+                            <MudTh>Celular</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Setores (CP/VE/FI/FAT)</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Nome</MudTd>
+                            <MudTd>@context.Cargo</MudTd>
+                            <MudTd>@context.TelComercial</MudTd>
+                            <MudTd>@context.Celular</MudTd>
+                            <MudTd>@context.Email</MudTd>
+                            <MudTd>
+                                <div class="d-flex gap-1">
+                                    @if (context.CP) { <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">CP</MudChip> }
+                                    @if (context.VE) { <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">VE</MudChip> }
+                                    @if (context.FI) { <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">FI</MudChip> }
+                                    @if (context.FAT) { <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">FAT</MudChip> }
+                                </div>
+                            </MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.Contatos.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <!-- NOVO CONTATO -->
+                    <MudPaper Elevation="1" Class="pa-3" Style="background: var(--mud-palette-background);">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Adicionar Contato</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="3">
+                                <MudTextField @bind-Value="_novoContato.Nome" Label="Nome do Contato" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="2">
+                                <MudTextField @bind-Value="_novoContato.Cargo" Label="Cargo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="2">
+                                <MudTextField @bind-Value="_novoContato.TelComercial" Label="Telefone Comercial" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="2">
+                                <MudTextField @bind-Value="_novoContato.Celular" Label="Celular / WhatsApp" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTextField @bind-Value="_novoContato.Email" Label="Email" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="8">
+                                <div class="d-flex gap-4 align-center">
+                                    <MudText Typo="Typo.caption">Áreas de atuação:</MudText>
+                                    <MudCheckBox @bind-Value="_novoContato.CP" Label="Compras (CP)" Color="Color.Primary" Dense="true" />
+                                    <MudCheckBox @bind-Value="_novoContato.VE" Label="Vendas (VE)" Color="Color.Secondary" Dense="true" />
+                                    <MudCheckBox @bind-Value="_novoContato.FI" Label="Financeiro (FI)" Color="Color.Success" Dense="true" />
+                                    <MudCheckBox @bind-Value="_novoContato.FAT" Label="Faturamento (FAT)" Color="Color.Warning" Dense="true" />
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="4" Class="text-right">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.PersonAdd"
+                                           OnClick="AddContato">
+                                    Adicionar Contato
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudTabPanel>
+
+                <!-- ABA 2: OBS / ALERTAS -->
+                <MudTabPanel Text="Obs / Alertas" Icon="@Icons.Material.Filled.WarningAmber">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="6">
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3">
+                                <strong>Alertas Importantes:</strong> Qualquer informação aqui digitada será exibida em destaque para os vendedores ao emitir pedidos.
+                            </MudAlert>
+                            <MudTextField @bind-Value="_model.Alertas" Label="Texto de Alerta (Ex: Exige laudo, Não faturar às sextas...)"
+                                          Variant="Variant.Outlined" Lines="5" Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField @bind-Value="_model.Observacao" Label="Observações Gerais Internas"
+                                          Variant="Variant.Outlined" Lines="5" Margin="Margin.Dense" />
+                            
+                            <div class="mt-4">
+                                <MudNumericField @bind-Value="_model.ToleranciaProducao" Label="Tolerância de Produção (% para alumínio/corte)"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Format="N2" Adornment="Adornment.End" AdornmentText="%" />
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <!-- ABA 3: CARACTERÍSTICAS -->
+                <MudTabPanel Text="Características" Icon="@Icons.Material.Filled.AutoAwesome">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" sm="4">
+                            <MudSelect @bind-Value="_model.Potencial" Label="Potencial de Compra" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                <MudSelectItem Value="@((PotencialMailing?)PotencialMailing.Alto)">Alto</MudSelectItem>
+                                <MudSelectItem Value="@((PotencialMailing?)PotencialMailing.Medio)">Médio</MudSelectItem>
+                                <MudSelectItem Value="@((PotencialMailing?)PotencialMailing.Baixo)">Baixo</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.Ranqueamento" Label="Ranqueamento (ex: A+, A, B, C)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.Origem" Label="Origem do Lead / Cadastro (Ex: Indicação, Site, Feira)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider Class="my-4" />
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Grupos de Preferência de Produtos</MudText>
+                    
+                    <MudTable Items="@_model.Preferencias" Dense="true" Hover="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Grupo de Produtos</MudTh>
+                            <MudTh>Subgrupo</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.GrupoNome</MudTd>
+                            <MudTd>@context.SubGrupoNome</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.Preferencias.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 4: CNAE -->
+                <MudTabPanel Text="CNAE" Icon="@Icons.Material.Filled.AccountBalanceWallet">
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Atividades Econômicas (CNAE)</MudText>
+                    <MudTable Items="@_model.Cnaes" Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Tipo</MudTh>
+                            <MudTh>Código CNAE</MudTh>
+                            <MudTh>Descrição da Atividade</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@(context.Tipo == TipoCnae.Principal ? Color.Primary : Color.Default)">
+                                    @context.Tipo
+                                </MudChip>
+                            </MudTd>
+                            <MudTd><strong>@context.CnaeCodigo</strong></MudTd>
+                            <MudTd>@context.CnaeDescricao</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.Cnaes.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 5: AÇÕES -->
+                <MudTabPanel Text="Ações" Icon="@Icons.Material.Filled.AssignmentTurnedIn">
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.h6" Style="font-weight: 600;">Histórico de Ações Comerciais</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="AddAcao">
+                            Registrar Ação
+                        </MudButton>
+                    </div>
+
+                    <MudTable Items="@_model.Acoes" Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Data/Hora</MudTh>
+                            <MudTh>Tipo</MudTh>
+                            <MudTh>Ação Realizada</MudTh>
+                            <MudTh>Resultado Obtido</MudTh>
+                            <MudTh>Usuário</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Data.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                            <MudTd><MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">@context.TipoAcao</MudChip></MudTd>
+                            <MudTd>@context.Acao</MudTd>
+                            <MudTd>@context.Resultado</MudTd>
+                            <MudTd>@context.UsuarioNome</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 6: FOLLOW-UP -->
+                <MudTabPanel Text="Follow-Up" Icon="@Icons.Material.Filled.CalendarMonth">
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.h6" Style="font-weight: 600;">Follow-ups e Retornos Agendados</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AddAlert"
+                                   OnClick="AddFollowUp">
+                            Agendar Retorno
+                        </MudButton>
+                    </div>
+
+                    <MudTable Items="@_model.FollowUps" Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Data de Retorno</MudTh>
+                            <MudTh>Assunto</MudTh>
+                            <MudTh>Descrição</MudTh>
+                            <MudTh>Responsável</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.DataRetorno.ToString("dd/MM/yyyy")</strong></MudTd>
+                            <MudTd>@context.Assunto</MudTd>
+                            <MudTd>@context.Descricao</MudTd>
+                            <MudTd>@context.UsuarioNome</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@(context.Encerrado ? Color.Success : Color.Warning)" Variant="Variant.Filled">
+                                    @(context.Encerrado ? "Concluído" : "Pendente")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudButton Variant="Variant.Text" Size="Size.Small" Color="@(context.Encerrado ? Color.Default : Color.Success)"
+                                           OnClick="@(() => context.Encerrado = !context.Encerrado)">
+                                    @(context.Encerrado ? "Reabrir" : "Encerrar")
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 7: FATURAMENTO/FINANCEIRO -->
+                <MudTabPanel Text="Faturamento/Financeiro" Icon="@Icons.Material.Filled.Payments">
+                    @if (_model.Faturamento == null) { _model.Faturamento = new MailingFaturamentoDto(); }
+                    
+                    <MudGrid Spacing="3" Class="mb-4">
+                        <MudItem xs="12" sm="3">
+                            <MudTextField @bind-Value="_model.Faturamento.ListaPrecoNome" Label="Tabela de Preço Padrão" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudTextField @bind-Value="_model.Faturamento.FormaPagtoNome" Label="Condição / Forma de Pagto" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField @bind-Value="_model.Faturamento.LimiteCredito" Label="Limite de Crédito (R$)" Variant="Variant.Outlined" Margin="Margin.Dense" Format="N2" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField @bind-Value="_model.Faturamento.ComissaoPct" Label="Comissão Especial (%)" Variant="Variant.Outlined" Margin="Margin.Dense" Format="N2" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField @bind-Value="_model.Faturamento.DiaPagamento" Label="Dia de Vencimento Fixo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudCheckBox @bind-Value="_model.Faturamento.Bloqueado" Label="Bloqueado para Venda" Color="Color.Error" Dense="true" />
+                        </MudItem>
+                        @if (_model.Faturamento.Bloqueado)
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_model.Faturamento.MotivoBloqueio" Label="Motivo do Bloqueio Comercial" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudDivider Class="my-4" />
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Dados Bancários & Chave PIX</MudText>
+
+                    <MudTable Items="@_model.DadosBancarios" Dense="true" Hover="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Banco</MudTh>
+                            <MudTh>Agência</MudTh>
+                            <MudTh>Conta Corrente</MudTh>
+                            <MudTh>Favorecido</MudTh>
+                            <MudTh>Chave PIX</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.BancoNome (@context.BancoCodigo)</MudTd>
+                            <MudTd>@context.Agencia</MudTd>
+                            <MudTd>@context.Conta</MudTd>
+                            <MudTd>@context.Favorecido</MudTd>
+                            <MudTd>@context.ChavePix</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.DadosBancarios.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 8: TRANSPORTADORA -->
+                <MudTabPanel Text="Transportadora" Icon="@Icons.Material.Filled.LocalShipping">
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Veículos e Frota Cadastrada</MudText>
+                    <MudTable Items="@_model.Veiculos" Dense="true" Hover="true" Striped="true" Elevation="1" Class="mb-4">
+                        <HeaderContent>
+                            <MudTh>Tipo</MudTh>
+                            <MudTh>Marca / Modelo</MudTh>
+                            <MudTh>Placa</MudTh>
+                            <MudTh>ANTT</MudTh>
+                            <MudTh>Cidade - UF</MudTh>
+                            <MudTh>Capacidade (Kg)</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.TipoVeiculo</MudTd>
+                            <MudTd>@context.Marca @context.Modelo</MudTd>
+                            <MudTd><strong>@context.Placa</strong></MudTd>
+                            <MudTd>@context.Antt</MudTd>
+                            <MudTd>@context.Cidade - @context.Estado</MudTd>
+                            <MudTd>@context.CapacidadeKg?.ToString("N0") Kg</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => _model.Veiculos.Remove(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudDivider Class="my-4" />
+                    <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 600;">Regiões de Atendimento e Prazos</MudText>
+                    <MudTable Items="@_model.Regioes" Dense="true" Hover="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>UF / Estado</MudTh>
+                            <MudTh>Região / Cidade</MudTh>
+                            <MudTh>Prazo (Dias)</MudTh>
+                            <MudTh>Valor Frete / Kg</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Estado</MudTd>
+                            <MudTd>@context.CidadeNome</MudTd>
+                            <MudTd>@context.PrazoDias dia(s)</MudTd>
+                            <MudTd>R$ @(context.ValorFreteKg?.ToString("N2") ?? "-")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- ABA 9: ESTATÍSTICAS -->
+                <MudTabPanel Text="Estatísticas" Icon="@Icons.Material.Filled.BarChart">
+                    @if (_estatisticas != null)
+                    {
+                        <MudGrid Spacing="3" Class="mt-2">
+                            <MudItem xs="12" sm="4">
+                                <MudPaper Class="pa-4 text-center" Elevation="2">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Faturamento Total Histórico</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 700;">
+                                        R$ @_estatisticas.TotalFaturadoHistorico.ToString("N2")
+                                    </MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudPaper Class="pa-4 text-center" Elevation="2">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Faturamento Ano Atual (2026)</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Success" Style="font-weight: 700;">
+                                        R$ @_estatisticas.TotalFaturadoAnoAtual.ToString("N2")
+                                    </MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudPaper Class="pa-4 text-center" Elevation="2">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Ticket Médio por Pedido</MudText>
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">
+                                        R$ @_estatisticas.TicketMedio.ToString("N2")
+                                    </MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudAlert Severity="Severity.Info" Class="mt-2">
+                                    Total de Pedidos Emitidos: <strong>@_estatisticas.QuantidadePedidos</strong> | Ordens de Serviço: <strong>@_estatisticas.QuantidadeOrdensServico</strong> | Dias sem Compra: <strong>@_estatisticas.DiasSemComprar dias</strong>
+                                </MudAlert>
+                            </MudItem>
+                        </MudGrid>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Salve o cadastro para visualizar as estatísticas calculadas.</MudText>
+                    }
+                </MudTabPanel>
+
+                <!-- ABA 10: DOCUMENTOS -->
+                <MudTabPanel Text="Documentos" Icon="@Icons.Material.Filled.AttachFile">
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.h6" Style="font-weight: 600;">Documentos e Anexos (Google Cloud Storage)</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   OnClick="SimulateUploadDocumento">
+                            Enviar Documento
+                        </MudButton>
+                    </div>
+
+                    <MudTable Items="@_model.Documentos" Dense="true" Hover="true" Striped="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Descrição</MudTh>
+                            <MudTh>Arquivo</MudTh>
+                            <MudTh>Data de Envio</MudTh>
+                            <MudTh>Tamanho</MudTh>
+                            <MudTh>Usuário</MudTh>
+                            <MudTh Style="text-align: right;">Ações</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Descricao</MudTd>
+                            <MudTd><strong>@context.NomeArquivo</strong></MudTd>
+                            <MudTd>@context.DataHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                            <MudTd>@(context.TamanhoBytes / 1024) KB</MudTd>
+                            <MudTd>@context.UsuarioNome</MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="Color.Primary"
+                                               OnClick="@(() => DownloadDoc(context.NomeArquivo))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
+        </MudPaper>
+    </MudForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    private bool IsNew => !Id.HasValue || Id.Value == 0;
+
+    private MudForm? _form;
+    private int _tabIndex = 0;
+    private bool _loading = true;
+    private bool _saving = false;
+
+    private MailingUpdateDto _model = new();
+    private MailingEstatisticasDto? _estatisticas;
+
+    private MailingEnderecoDto _novoEndereco = new();
+    private MailingContatoDto _novoContato = new();
+
+    private List<BreadcrumbItem> _breadcrumbItems = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _breadcrumbItems = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem("Início", href: "/"),
+            new BreadcrumbItem("Mailing", href: "/comercial/mailing"),
+            new BreadcrumbItem(IsNew ? "Novo" : $"#{Id}", href: null, disabled: true)
+        };
+
+        if (IsNew)
+        {
+            _model = new MailingUpdateDto
+            {
+                TipoPessoa = TipoPessoa.Juridica,
+                IsCliente = true,
+                IndIe = IndIe.ContribuinteICMS,
+                Faturamento = new MailingFaturamentoDto { LimiteCredito = 50000 }
+            };
+        }
+        else
+        {
+            var data = await MailingService.GetByIdAsync(Id!.Value);
+            if (data != null)
+            {
+                _model = new MailingUpdateDto
+                {
+                    Id = data.Id,
+                    Inativo = data.Inativo,
+                    IsCliente = data.IsCliente,
+                    IsFornecedor = data.IsFornecedor,
+                    IsTransportadora = data.IsTransportadora,
+                    IsIntermediador = data.IsIntermediador,
+                    IsFuncionario = data.IsFuncionario,
+                    VendedorId = data.VendedorId,
+                    TipoPessoa = data.TipoPessoa,
+                    RazaoSocial = data.RazaoSocial,
+                    NomeFantasia = data.NomeFantasia,
+                    NomeCompleto = data.NomeCompleto,
+                    Cnpj = data.Cnpj,
+                    Cpf = data.Cpf,
+                    Ie = data.Ie,
+                    Im = data.Im,
+                    Rne = data.Rne,
+                    Rg = data.Rg,
+                    IndIe = data.IndIe,
+                    TipoConsumidor = data.TipoConsumidor,
+                    RegimeTributario = data.RegimeTributario,
+                    Alertas = data.Alertas,
+                    Observacao = data.Observacao,
+                    Ranqueamento = data.Ranqueamento,
+                    Potencial = data.Potencial,
+                    Origem = data.Origem,
+                    ToleranciaProducao = data.ToleranciaProducao,
+                    Enderecos = data.Enderecos,
+                    Contatos = data.Contatos,
+                    Preferencias = data.Preferencias,
+                    Cnaes = data.Cnaes,
+                    Acoes = data.Acoes,
+                    FollowUps = data.FollowUps,
+                    DadosBancarios = data.DadosBancarios,
+                    Veiculos = data.Veiculos,
+                    Regioes = data.Regioes,
+                    Documentos = data.Documentos,
+                    Faturamento = data.Faturamento
+                };
+
+                _estatisticas = await MailingService.GetEstatisticasAsync(Id.Value);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task BuscarCepAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_novoEndereco.Cep)) return;
+        var res = await MailingService.BuscarCepAsync(_novoEndereco.Cep);
+        if (res != null)
+        {
+            _novoEndereco.Logradouro = res.Logradouro;
+            _novoEndereco.Complemento = res.Complemento;
+            _novoEndereco.Bairro = res.Bairro;
+            _novoEndereco.Cidade = res.Localidade;
+            _novoEndereco.Estado = res.Uf;
+            Snackbar.Add("Endereço preenchido com sucesso pelo ViaCEP!", Severity.Success);
+        }
+    }
+
+    private async Task BuscarCnpjAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_model.Cnpj)) return;
+        var res = await MailingService.BuscarCnpjAsync(_model.Cnpj);
+        if (res != null)
+        {
+            _model.RazaoSocial = res.Nome;
+            _model.NomeFantasia = res.Fantasia;
+            if (!_model.Enderecos.Any() && !string.IsNullOrEmpty(res.Logradouro))
+            {
+                _model.Enderecos.Add(new MailingEnderecoDto
+                {
+                    TipoEnd = TipoEndereco.Faturamento,
+                    Cep = res.Cep,
+                    Logradouro = res.Logradouro,
+                    Numero = res.Numero,
+                    Bairro = res.Bairro,
+                    Cidade = res.Municipio,
+                    Estado = res.Uf,
+                    Principal = true
+                });
+            }
+            if (!_model.Contatos.Any() && (!string.IsNullOrEmpty(res.Telefone) || !string.IsNullOrEmpty(res.Email)))
+            {
+                _model.Contatos.Add(new MailingContatoDto
+                {
+                    Nome = "Contato Principal",
+                    TelComercial = res.Telefone,
+                    Email = res.Email,
+                    CP = true,
+                    FAT = true
+                });
+            }
+            Snackbar.Add("Dados da empresa obtidos com sucesso na Receita Federal!", Severity.Success);
+        }
+    }
+
+    private void AddEndereco()
+    {
+        if (string.IsNullOrWhiteSpace(_novoEndereco.Logradouro))
+        {
+            Snackbar.Add("Informe o logradouro do endereço.", Severity.Warning);
+            return;
+        }
+
+        _model.Enderecos.Add(new MailingEnderecoDto
+        {
+            TipoEnd = _novoEndereco.TipoEnd,
+            Cep = _novoEndereco.Cep,
+            Logradouro = _novoEndereco.Logradouro,
+            Numero = _novoEndereco.Numero,
+            Complemento = _novoEndereco.Complemento,
+            Bairro = _novoEndereco.Bairro,
+            Cidade = _novoEndereco.Cidade,
+            Estado = _novoEndereco.Estado,
+            Principal = !_model.Enderecos.Any()
+        });
+
+        _novoEndereco = new MailingEnderecoDto();
+    }
+
+    private void AddContato()
+    {
+        if (string.IsNullOrWhiteSpace(_novoContato.Nome))
+        {
+            Snackbar.Add("Informe o nome do contato.", Severity.Warning);
+            return;
+        }
+
+        _model.Contatos.Add(new MailingContatoDto
+        {
+            Nome = _novoContato.Nome,
+            Cargo = _novoContato.Cargo,
+            TelComercial = _novoContato.TelComercial,
+            Celular = _novoContato.Celular,
+            Email = _novoContato.Email,
+            CP = _novoContato.CP,
+            VE = _novoContato.VE,
+            FI = _novoContato.FI,
+            FAT = _novoContato.FAT
+        });
+
+        _novoContato = new MailingContatoDto();
+    }
+
+    private void AddAcao()
+    {
+        _model.Acoes.Add(new MailingAcaoDto
+        {
+            Data = DateTime.UtcNow,
+            TipoAcao = "Telefonema",
+            Acao = "Contato telefônico para alinhamento de propostas",
+            Resultado = "Contato com sucesso",
+            UsuarioNome = "Usuário Atual"
+        });
+        Snackbar.Add("Ação registrada no histórico.", Severity.Info);
+    }
+
+    private void AddFollowUp()
+    {
+        _model.FollowUps.Add(new MailingFollowUpDto
+        {
+            DataRetorno = DateTime.UtcNow.AddDays(7),
+            Assunto = "Retorno de proposta comercial",
+            Descricao = "Verificar retorno do cliente sobre os prazos de entrega",
+            UsuarioNome = "Vendedor Responsável",
+            Encerrado = false
+        });
+        Snackbar.Add("Novo follow-up agendado.", Severity.Info);
+    }
+
+    private void SimulateUploadDocumento()
+    {
+        _model.Documentos.Add(new MailingDocumentoDto
+        {
+            Descricao = "Contrato Social / Cartão CNPJ",
+            NomeArquivo = $"Contrato_Social_{DateTime.UtcNow.Ticks}.pdf",
+            TamanhoBytes = 1024 * 340,
+            DataHora = DateTime.UtcNow,
+            UsuarioNome = "Admin"
+        });
+        Snackbar.Add("Documento enviado e salvo no Google Cloud Storage (mock) com sucesso!", Severity.Success);
+    }
+
+    private void DownloadDoc(string nome)
+    {
+        Snackbar.Add($"Iniciando download do arquivo '{nome}'...", Severity.Info);
+    }
+
+    private async Task SaveMailingAsync()
+    {
+        if (_form != null)
+        {
+            await _form.ValidateAsync();
+            if (!_form.IsValid)
+            {
+                Snackbar.Add("Por favor, preencha todos os campos obrigatórios.", Severity.Warning);
+                return;
+            }
+        }
+
+        _saving = true;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await MailingService.CreateAsync(_model);
+                if (newId.HasValue)
+                {
+                    Snackbar.Add($"Mailing #{newId.Value} cadastrado com sucesso!", Severity.Success);
+                    Nav.NavigateTo($"/comercial/mailing/{newId.Value}");
+                }
+            }
+            else
+            {
+                var success = await MailingService.UpdateAsync(_model);
+                if (success)
+                {
+                    Snackbar.Add("Cadastro atualizado com sucesso!", Severity.Success);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

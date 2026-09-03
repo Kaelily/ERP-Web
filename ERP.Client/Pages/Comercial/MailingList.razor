@@ -1,0 +1,341 @@
+@page "/comercial/mailing"
+@inject IMailingService MailingService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Mailing Geral - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudBreadcrumbs Items="_breadcrumbItems" Class="pa-0 mb-1" />
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Cadastro Central de Mailing
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Base unificada de Clientes, Fornecedores, Transportadoras e Funcionários.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Nav.NavigateTo("/comercial/mailing/novo"))">
+            Novo Cadastro
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Download"
+                   OnClick="ExportData">
+            Exportar
+        </MudButton>
+    </div>
+</div>
+
+<!-- FILTROS SUPERIORES -->
+<MudPaper Elevation="1" Class="pa-4 mb-4">
+    <MudGrid Spacing="2" Class="align-center">
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="_filter.Termo" Placeholder="Buscar por nome, razão social, CNPJ/CPF, cidade..."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                          OnClearButtonClick="OnSearch" OnKeyUp="@(e => { if (e.Key == "Enter") OnSearch(); })" />
+        </MudItem>
+
+        <MudItem xs="12" sm="3">
+            <MudSelect T="string" Value="_filter.Tipo" Label="Tipo de Entidade" Variant="Variant.Outlined" Margin="Margin.Dense"
+                       ValueChanged="@((string v) => { _filter.Tipo = v; OnSearch(); })">
+                <MudSelectItem Value="@("Todos")">Todos os Tipos</MudSelectItem>
+                <MudSelectItem Value="@("Cliente")">Clientes</MudSelectItem>
+                <MudSelectItem Value="@("Fornecedor")">Fornecedores</MudSelectItem>
+                <MudSelectItem Value="@("Transportadora")">Transportadoras</MudSelectItem>
+                <MudSelectItem Value="@("Funcionario")">Funcionários</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" sm="3">
+            <div class="d-flex gap-2 align-center">
+                <MudCheckBox T="bool?" Value="_filter.Inativo" Label="Inativos" Color="Color.Error" Dense="true"
+                             ValueChanged="@((bool? v) => { _filter.Inativo = v; OnSearch(); })" />
+                <MudCheckBox T="bool?" Value="_filter.Bloqueado" Label="Bloqueados" Color="Color.Warning" Dense="true"
+                             ValueChanged="@((bool? v) => { _filter.Bloqueado = v; OnSearch(); })" />
+            </div>
+        </MudItem>
+
+        <MudItem xs="12" sm="2" Class="text-right">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FilterAlt"
+                       OnClick="OnSearch" FullWidth="true">
+                Filtrar
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<!-- DATA GRID COM PAGINAÇÃO SERVER-SIDE -->
+<MudDataGrid T="MailingListItemDto" ServerData="ServerReload" @ref="_grid"
+             Hover="true" Dense="true" Striped="true" Elevation="2" Loading="@_loading">
+    <Columns>
+        <PropertyColumn Property="x => x.Id" Title="#" HeaderStyle="width: 60px;" />
+        
+        <TemplateColumn Title="Razão Social / Nome" Sortable="true" SortBy="x => x.Nome">
+            <CellTemplate>
+                <div class="d-flex flex-column">
+                    <div class="d-flex align-center gap-1">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@context.Item.Nome</MudText>
+                        @if (context.Item.Bloqueado)
+                        {
+                            <MudTooltip Text="Faturamento Bloqueado">
+                                <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" Style="font-size: 16px;" />
+                            </MudTooltip>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(context.Item.NomeFantasia))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.NomeFantasia</MudText>
+                    }
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+
+        <PropertyColumn Property="x => x.Documento" Title="CNPJ / CPF" />
+
+        <TemplateColumn Title="Tipo de Cadastro">
+            <CellTemplate>
+                <div class="d-flex gap-1 flex-wrap">
+                    @if (context.Item.IsCliente)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="pa-1">Cliente</MudChip>
+                    }
+                    @if (context.Item.IsFornecedor)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined" Class="pa-1">Fornecedor</MudChip>
+                    }
+                    @if (context.Item.IsTransportadora)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="pa-1">Transp.</MudChip>
+                    }
+                    @if (context.Item.IsFuncionario)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Class="pa-1">Func.</MudChip>
+                    }
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+
+        <TemplateColumn Title="Localização">
+            <CellTemplate>
+                @if (!string.IsNullOrEmpty(context.Item.Cidade))
+                {
+                    <MudText Typo="Typo.body2">@context.Item.Cidade - @context.Item.Estado</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Não informado</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+
+        <TemplateColumn Title="Contato">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@(context.Item.Telefone ?? context.Item.Email ?? "-")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+
+        <TemplateColumn Title="Status">
+            <CellTemplate>
+                @if (context.Item.Inativo)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">Inativo</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Ativo</MudChip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+
+        <!-- AÇÕES -->
+        <TemplateColumn Title="Ações" HeaderStyle="text-align: right;" CellStyle="text-align: right;">
+            <CellTemplate>
+                <MudTooltip Text="Editar Cadastro Completo (10 Abas)">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                   OnClick="@(() => Nav.NavigateTo($"/comercial/mailing/{context.Item.Id}"))" />
+                </MudTooltip>
+                
+                <MudTooltip Text="Visualizar Estatísticas & Faturamento">
+                    <MudIconButton Icon="@Icons.Material.Filled.Insights" Size="Size.Small" Color="Color.Secondary"
+                                   OnClick="@(() => OpenStatisticsDialog(context.Item.Id, context.Item.Nome))" />
+                </MudTooltip>
+
+                <MudTooltip Text="@(context.Item.Inativo ? "Reativar Cadastro" : "Inativar Cadastro")">
+                    <MudIconButton Icon="@(context.Item.Inativo ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Block)"
+                                   Size="Size.Small" Color="@(context.Item.Inativo ? Color.Success : Color.Warning)"
+                                   OnClick="@(() => ToggleInactivate(context.Item.Id))" />
+                </MudTooltip>
+
+                <MudTooltip Text="Excluir Registro (Soft Delete)">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                   OnClick="@(() => DeleteMailing(context.Item.Id, context.Item.Nome))" />
+                </MudTooltip>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+
+    <PagerContent>
+        <MudDataGridPager T="MailingListItemDto" RowsPerPageString="Linhas por página:" />
+    </PagerContent>
+</MudDataGrid>
+
+<!-- DIALOG DE ESTATÍSTICAS RÁPIDAS -->
+<MudDialog @bind-Visible="_statsDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Estatísticas do Cliente: @_statsClienteNome</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (_currentStats != null)
+        {
+            <MudGrid Class="mt-2">
+                <MudItem xs="6">
+                    <MudPaper Class="pa-3 text-center" Elevation="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Total Faturado (Histórico)</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Style="font-weight: 700;">
+                            R$ @_currentStats.TotalFaturadoHistorico.ToString("N2")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudPaper Class="pa-3 text-center" Elevation="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Faturamento Ano Atual</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Success" Style="font-weight: 700;">
+                            R$ @_currentStats.TotalFaturadoAnoAtual.ToString("N2")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 text-center" Elevation="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Ticket Médio</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: 600;">
+                            R$ @_currentStats.TicketMedio.ToString("N2")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 text-center" Elevation="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Qtd. de Pedidos</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: 600;">
+                            @_currentStats.QuantidadePedidos
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 text-center" Elevation="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Dias sem Comprar</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: 600;" Color="@(_currentStats.DiasSemComprar > 30 ? Color.Error : Color.Default)">
+                            @_currentStats.DiasSemComprar dias
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                        Títulos em Aberto: <strong>R$ @_currentStats.SaldoTitulosAberto.ToString("N2")</strong> | Vencidos: <strong>R$ @_currentStats.SaldoTitulosVencidos.ToString("N2")</strong>
+                    </MudAlert>
+                </MudItem>
+            </MudGrid>
+        }
+        else
+        {
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _statsDialogVisible = false)">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private MudDataGrid<MailingListItemDto>? _grid;
+    private MailingFilterDto _filter = new();
+    private bool _loading = false;
+    private bool _statsDialogVisible = false;
+    private string _statsClienteNome = "";
+    private MailingEstatisticasDto? _currentStats;
+
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+
+    private List<BreadcrumbItem> _breadcrumbItems = new()
+    {
+        new BreadcrumbItem("Início", href: "/"),
+        new BreadcrumbItem("Comercial", href: "/comercial/mailing"),
+        new BreadcrumbItem("Mailing", href: null, disabled: true)
+    };
+
+    private async Task<GridData<MailingListItemDto>> ServerReload(GridState<MailingListItemDto> state, CancellationToken token = default)
+    {
+        _loading = true;
+        _filter.PageIndex = state.Page + 1;
+        _filter.PageSize = state.PageSize;
+
+        var sortDef = state.SortDefinitions.FirstOrDefault();
+        if (sortDef != null)
+        {
+            _filter.SortBy = sortDef.SortBy;
+            _filter.SortDescending = sortDef.Descending;
+        }
+
+        var result = await MailingService.GetListAsync(_filter);
+        _loading = false;
+
+        return new GridData<MailingListItemDto>
+        {
+            TotalItems = result.TotalCount,
+            Items = result.Items
+        };
+    }
+
+    private void OnSearch()
+    {
+        _grid?.ReloadServerData();
+    }
+
+    private async Task ToggleInactivate(int id)
+    {
+        var success = await MailingService.InativarAsync(id);
+        if (success)
+        {
+            Snackbar.Add("Status do registro atualizado com sucesso.", Severity.Success);
+            _grid?.ReloadServerData();
+        }
+    }
+
+    private async Task DeleteMailing(int id, string nome)
+    {
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Confirmação de Exclusão",
+            $"Tem certeza que deseja inativar/excluir o cadastro '{nome}'?",
+            yesText: "Sim, Excluir", cancelText: "Cancelar");
+
+        if (confirm == true)
+        {
+            var success = await MailingService.DeleteAsync(id);
+            if (success)
+            {
+                Snackbar.Add("Registro excluído com sucesso.", Severity.Success);
+                _grid?.ReloadServerData();
+            }
+        }
+    }
+
+    private async Task OpenStatisticsDialog(int id, string nome)
+    {
+        _statsClienteNome = nome;
+        _currentStats = null;
+        _statsDialogVisible = true;
+        _currentStats = await MailingService.GetEstatisticasAsync(id);
+    }
+
+    private void ExportData()
+    {
+        Snackbar.Add("Exportando dados para formato XLSX/CSV...", Severity.Info);
+    }
+}

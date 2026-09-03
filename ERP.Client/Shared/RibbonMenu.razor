@@ -1,0 +1,263 @@
+@inject ModuleStateService ModuleState
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<div class="erp-ribbon-container">
+    @switch (ModuleState.ActiveModule)
+    {
+        case ModuloSistema.Comercial:
+        case ModuloSistema.CRM:
+            <!-- GRUPO CADASTROS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Group" OnClick="@(() => Nav.NavigateTo("/comercial/mailing"))">
+                        Mailing
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.PriceCheck" OnClick="@(() => ShowNotice("Lista de Preços"))">
+                        Lista de Preço
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Tune" OnClick="@(() => ShowNotice("Cadastros Auxiliares"))">
+                        Auxiliares
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Cadastros</div>
+            </div>
+
+            <!-- GRUPO LANÇAMENTOS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ViewKanban" OnClick="@(() => Nav.NavigateTo("/comercial/crm"))">
+                        CRM Kanban
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.ShoppingCart" OnClick="@(() => Nav.NavigateTo("/comercial/vendas"))">
+                        Vendas / Pedidos
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.RequestQuote" OnClick="@(() => ShowNotice("Orçamentos"))">
+                        Orçamentos
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Build" OnClick="@(() => ShowNotice("Ordens de Serviço"))">
+                        Ordem de Serviço
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Lançamentos</div>
+            </div>
+
+            <!-- GRUPO FERRAMENTAS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.FolderShared" OnClick="@(() => ShowNotice("Carteira de Pedidos"))">
+                        Carteira Pedidos
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.LocalShipping" OnClick="@(() => ShowNotice("Fechamento de Frete"))">
+                        Fechamento Frete
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => ShowNotice("Fechamento de Comissão"))">
+                        Comissão
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Ferramentas</div>
+            </div>
+
+            <!-- GRUPO RELATÓRIOS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.Assessment" OnClick="@(() => ShowNotice("Estatísticas de Vendas"))">
+                        Estatísticas
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.TrendingUp" OnClick="@(() => ShowNotice("Margem de Lucro"))">
+                        Margem Lucro
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Relatórios</div>
+            </div>
+            break;
+
+        case ModuloSistema.Estoque:
+            <!-- GRUPO CADASTROS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Inventory2" OnClick="@(() => Nav.NavigateTo("/estoque/produtos"))">
+                        Produtos
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Warehouse" OnClick="@(() => ShowNotice("Locais de Estoque"))">
+                        Locais
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.QrCode" OnClick="@(() => ShowNotice("Rastreamento de Lotes"))">
+                        Lotes
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Cadastros</div>
+            </div>
+
+            <!-- GRUPO LANÇAMENTOS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small" StartIcon="@Icons.Material.Filled.MoveToInbox" OnClick="@(() => ShowNotice("Entrada de Estoque"))">
+                        Entrada NF
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" StartIcon="@Icons.Material.Filled.Outbox" OnClick="@(() => ShowNotice("Saída de Estoque"))">
+                        Baixa / Saída
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="@(() => ShowNotice("Transferência entre Locais"))">
+                        Transferência
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Checklist" OnClick="@(() => ShowNotice("Pick List de Expedição"))">
+                        Pick List
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Lançamentos</div>
+            </div>
+
+            <!-- GRUPO FERRAMENTAS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Calculate" OnClick="@(() => ShowNotice("Atualizar Custo na Venda"))">
+                        Atualizar Custos
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Description" OnClick="@(() => ShowNotice("Geração SPED EFD Fiscal"))">
+                        SPED EFD
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Ferramentas</div>
+            </div>
+            break;
+
+        case ModuloSistema.Financeiro:
+            <!-- GRUPO CADASTROS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountBalance" OnClick="@(() => Nav.NavigateTo("/financeiro"))">
+                        Painel Financeiro
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Payment" OnClick="@(() => ShowNotice("Contas Bancárias"))">
+                        Bancos & Contas
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountTree" OnClick="@(() => ShowNotice("Plano de Contas"))">
+                        Plano de Contas
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Cadastros</div>
+            </div>
+
+            <!-- GRUPO LANÇAMENTOS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.TrendingDown" OnClick="@(() => Nav.NavigateTo("/financeiro?tab=1"))">
+                        Contas a Pagar
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small" StartIcon="@Icons.Material.Filled.TrendingUp" OnClick="@(() => Nav.NavigateTo("/financeiro?tab=2"))">
+                        Contas a Receber
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.SyncAlt" OnClick="@(() => ShowNotice("Transferência entre Contas"))">
+                        Transferência
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Lançamentos</div>
+            </div>
+
+            <!-- GRUPO FERRAMENTAS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.ReceiptLong" OnClick="@(() => ShowNotice("Integração Boletos & PIX"))">
+                        Boletos / PIX
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="@(() => ShowNotice("Conciliação Bancária"))">
+                        Conciliação
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Ferramentas</div>
+            </div>
+            break;
+
+        case ModuloSistema.Faturamento:
+            <!-- GRUPO LANÇAMENTOS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Receipt" OnClick="@(() => Nav.NavigateTo("/faturamento"))">
+                        Gerenciar NF-e
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.HomeWork" OnClick="@(() => ShowNotice("NFS-e Municipal"))">
+                        NFS-e (Serviço)
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.MoveToInbox" OnClick="@(() => ShowNotice("Manifestação do Destinatário"))">
+                        Manifestar NF-e
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Lançamentos</div>
+            </div>
+
+            <!-- GRUPO CADASTROS FISCAIS -->
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.SettingsSuggest" OnClick="@(() => ShowNotice("Grupo de Tributação"))">
+                        Tributação NCM
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Map" OnClick="@(() => ShowNotice("Tabela ICMS Interestadual"))">
+                        ICMS por UF
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AutoAwesome" OnClick="@(() => ShowNotice("Reforma Tributária 2026: IBS/CBS"))">
+                        IBS / CBS 2026
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Cadastros Fiscais</div>
+            </div>
+            break;
+
+        case ModuloSistema.Sistema:
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Security" OnClick="@(() => Nav.NavigateTo("/sistema/rbac"))">
+                        Perfis & Permissões
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.ManageAccounts" OnClick="@(() => Nav.NavigateTo("/sistema/rbac"))">
+                        Usuários
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.History" OnClick="@(() => Nav.NavigateTo("/sistema/audit"))">
+                        Audit Log (Auditoria)
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Business" OnClick="@(() => ShowNotice("Empresa Emitente & Certificado"))">
+                        Empresa / SEFAZ
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Administração</div>
+            </div>
+            break;
+
+        default:
+            <div class="erp-ribbon-group">
+                <div class="erp-ribbon-buttons">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Dashboard" OnClick="@(() => Nav.NavigateTo("/"))">
+                        Visão Geral
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.List" OnClick="@(() => ShowNotice("Ação Rápida"))">
+                        Consultas Rápidas
+                    </MudButton>
+                </div>
+                <div class="erp-ribbon-group-title">Geral</div>
+            </div>
+            break;
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ModuleState.OnModuleChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ShowNotice(string feature)
+    {
+        Snackbar.Add($"Recurso '{feature}' integrado e disponível no menu lateral.", Severity.Info);
+    }
+
+    public void Dispose()
+    {
+        ModuleState.OnModuleChanged -= OnStateChanged;
+    }
+}

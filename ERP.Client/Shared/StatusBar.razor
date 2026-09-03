@@ -1,0 +1,69 @@
+@inject SignalRNotificationService NotificationService
+@inject ModuleStateService ModuleState
+@inject IAuthService AuthService
+@implements IDisposable
+
+<div class="erp-status-bar">
+    <div class="d-flex align-center gap-3">
+        <div class="d-flex align-center gap-1">
+            <span class="@(NotificationService.IsConnected ? "live-pulse" : "")" 
+                  style="@(!NotificationService.IsConnected ? "display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444;" : "")"></span>
+            <span>@(NotificationService.IsConnected ? "Conectado ao Servidor (SignalR)" : "Modo Offline / Desconectado")</span>
+        </div>
+        <MudDivider Vertical="true" FlexItem="true" Class="my-1" />
+        <div>
+            <MudIcon Icon="@Icons.Material.Filled.Layers" Size="Size.Small" Class="mr-1" Style="font-size: 14px; vertical-align: middle;" />
+            <span>Módulo Ativo: <strong>@ModuleState.ActiveModule</strong></span>
+        </div>
+    </div>
+
+    <div class="d-flex align-center gap-3">
+        @if (AuthService.CurrentUser != null)
+        {
+            <div>
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" Style="font-size: 14px; vertical-align: middle;" />
+                <span>@AuthService.CurrentUser.Nome (@AuthService.CurrentUser.PerfilNome)</span>
+            </div>
+            <MudDivider Vertical="true" FlexItem="true" Class="my-1" />
+        }
+        <div>
+            <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" Style="font-size: 14px; vertical-align: middle;" />
+            <span>@_currentTime.ToString("dd/MM/yyyy HH:mm:ss")</span>
+        </div>
+        <MudDivider Vertical="true" FlexItem="true" Class="my-1" />
+        <div>
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="pa-0 ma-0" Style="font-size: 11px;">
+                v1.0 Set/2026
+            </MudChip>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime _currentTime = DateTime.Now;
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        NotificationService.OnConnectionStatusChanged += OnStatusChanged;
+        ModuleState.OnModuleChanged += OnStatusChanged;
+
+        _timer = new System.Threading.Timer(_ =>
+        {
+            _currentTime = DateTime.Now;
+            InvokeAsync(StateHasChanged);
+        }, null, 1000, 1000);
+    }
+
+    private void OnStatusChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NotificationService.OnConnectionStatusChanged -= OnStatusChanged;
+        ModuleState.OnModuleChanged -= OnStatusChanged;
+        _timer?.Dispose();
+    }
+}

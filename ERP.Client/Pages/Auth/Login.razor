@@ -1,0 +1,134 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@layout EmptyLayout
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Login - ERP Web Matrix</PageTitle>
+
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 24px;">
+    <MudPaper Elevation="8" Class="pa-8" Style="max-width: 440px; width: 100%; border-radius: 16px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="text-center mb-6">
+            <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" Class="mb-3 mx-auto" Style="width: 56px; height: 56px;">
+                <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Large" />
+            </MudAvatar>
+            <MudText Typo="Typo.h5" Style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #f8fafc; letter-spacing: -0.5px;">
+                ERP WEB MATRIX
+            </MudText>
+            <MudText Typo="Typo.caption" Style="color: #94a3b8; font-size: 13px;">
+                Acesse o sistema com suas credenciais corporativas
+            </MudText>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-4">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        <MudForm @ref="_form" @bind-IsValid="@_isFormValid">
+            <MudTextField @bind-Value="_email" Label="Email Corporativo" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          InputType="InputType.Email" Required="true" RequiredError="Informe o email corporativo."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="_senha" Label="Senha de Acesso" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          InputType="@(_showPassword ? InputType.Text : InputType.Password)" Required="true" RequiredError="Informe a senha."
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                          Class="mb-4" />
+
+            <div class="d-flex justify-space-between align-center mb-6">
+                <MudCheckBox @bind-Value="_rememberMe" Label="Lembrar acesso" Color="Color.Primary" Dense="true" />
+                <MudLink Href="#" Color="Color.Secondary" Typo="Typo.caption">Esqueceu a senha?</MudLink>
+            </div>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large"
+                       Disabled="@_isLoading" OnClick="HandleLogin"
+                       StartIcon="@(_isLoading ? null : Icons.Material.Filled.Login)">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Autenticando...</MudText>
+                }
+                else
+                {
+                    <span>Entrar no Sistema</span>
+                }
+            </MudButton>
+        </MudForm>
+
+        <MudDivider Class="my-6" />
+
+        <div class="text-center">
+            <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block; margin-bottom: 8px;">
+                Contas de demonstração rápida:
+            </MudText>
+            <div class="d-flex justify-center gap-2">
+                <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Info" OnClick="@(() => SetCredentials("admin@erp.com.br", "Admin@123"))">
+                    Admin
+                </MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Info" OnClick="@(() => SetCredentials("joao.vendedor@erp.com.br", "Admin@123"))">
+                    Comercial
+                </MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Info" OnClick="@(() => SetCredentials("maria.financeiro@erp.com.br", "Admin@123"))">
+                    Financeiro
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+</div>
+
+@code {
+    private MudForm? _form;
+    private bool _isFormValid;
+    private string _email = "admin@erp.com.br";
+    private string _senha = "Admin@123";
+    private bool _rememberMe = true;
+    private bool _showPassword = false;
+    private bool _isLoading = false;
+    private string? _errorMessage;
+
+    private void SetCredentials(string email, string pass)
+    {
+        _email = email;
+        _senha = pass;
+    }
+
+    private async Task HandleLogin()
+    {
+        if (_form != null)
+        {
+            await _form.ValidateAsync();
+            if (!_form.IsValid) return;
+        }
+
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var success = await AuthService.LoginAsync(_email, _senha);
+            if (success)
+            {
+                Snackbar.Add($"Bem-vindo, {AuthService.CurrentUser?.Nome}!", Severity.Success);
+                Nav.NavigateTo("/");
+            }
+            else
+            {
+                _errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erro ao tentar efetuar login: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

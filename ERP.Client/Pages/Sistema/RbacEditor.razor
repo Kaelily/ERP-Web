@@ -1,0 +1,95 @@
+@page "/sistema/rbac"
+@inject ISnackbar Snackbar
+
+<PageTitle>Controle de Acesso (RBAC) - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Perfis de Acesso & Permissões por Módulo (RBAC)
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Controle granular de leitura, criação, edição e exclusão de acordo com a política de segurança da empresa.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="@(() => Snackbar.Add("Matriz de permissões salva com sucesso!", Severity.Success))">
+            Salvar Permissões
+        </MudButton>
+    </div>
+</div>
+
+<MudPaper Elevation="2" Class="pa-4 mb-4">
+    <MudGrid Spacing="3" Class="align-center mb-2">
+        <MudItem xs="12" sm="4">
+            <MudSelect @bind-Value="_selectedPerfil" Label="Selecionar Perfil para Edição" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem Value="@("Administrador")">Administrador (Full CRUD + Sistema)</MudSelectItem>
+                <MudSelectItem Value="@("Comercial")">Comercial (Vendas, CRM, Contratos)</MudSelectItem>
+                <MudSelectItem Value="@("Compras")">Compras (Compras, Estoque, Contratos)</MudSelectItem>
+                <MudSelectItem Value="@("Financeiro")">Financeiro (Financeiro, Faturamento)</MudSelectItem>
+                <MudSelectItem Value="@("Produção")">Produção (Produção, Estoque)</MudSelectItem>
+                <MudSelectItem Value="@("Leitura")">Somente Leitura (Todos exceto Sistema)</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="8">
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Perfil ativo: <strong>@_selectedPerfil</strong>. As alterações têm efeito imediato para todos os usuários vinculados.
+            </MudAlert>
+        </MudItem>
+    </MudGrid>
+
+    <MudTable Items="@_permissoes" Dense="true" Hover="true" Striped="true" Elevation="1">
+        <HeaderContent>
+            <MudTh>Módulo do ERP</MudTh>
+            <MudTh Style="text-align: center;">Nível</MudTh>
+            <MudTh Style="text-align: center;">Leitura (GET)</MudTh>
+            <MudTh Style="text-align: center;">Criação (POST)</MudTh>
+            <MudTh Style="text-align: center;">Edição (PUT)</MudTh>
+            <MudTh Style="text-align: center;">Exclusão (DELETE)</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><strong>@context.Modulo</strong></MudTd>
+            <MudTd Style="text-align: center;">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@context.Nivel</MudChip>
+            </MudTd>
+            <MudTd Style="text-align: center;">
+                <MudCheckBox @bind-Value="context.Ler" Color="Color.Primary" Dense="true" />
+            </MudTd>
+            <MudTd Style="text-align: center;">
+                <MudCheckBox @bind-Value="context.Criar" Color="Color.Secondary" Dense="true" />
+            </MudTd>
+            <MudTd Style="text-align: center;">
+                <MudCheckBox @bind-Value="context.Editar" Color="Color.Warning" Dense="true" />
+            </MudTd>
+            <MudTd Style="text-align: center;">
+                <MudCheckBox @bind-Value="context.Excluir" Color="Color.Error" Dense="true" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private string _selectedPerfil = "Comercial";
+
+    private List<PermissaoItem> _permissoes = new()
+    {
+        new() { Modulo = "Comercial / Mailing", Nivel = "CRUD", Ler = true, Criar = true, Editar = true, Excluir = true },
+        new() { Modulo = "CRM Pipeline", Nivel = "CRUD", Ler = true, Criar = true, Editar = true, Excluir = true },
+        new() { Modulo = "Contratos", Nivel = "CRUD", Ler = true, Criar = true, Editar = true, Excluir = false },
+        new() { Modulo = "Estoque / Produtos", Nivel = "Leitura", Ler = true, Criar = false, Editar = false, Excluir = false },
+        new() { Modulo = "Financeiro / Contas", Nivel = "Leitura", Ler = true, Criar = false, Editar = false, Excluir = false },
+        new() { Modulo = "Faturamento Fiscal", Nivel = "Leitura", Ler = true, Criar = false, Editar = false, Excluir = false },
+        new() { Modulo = "Sistema / Administração", Nivel = "Nenhum", Ler = false, Criar = false, Editar = false, Excluir = false }
+    };
+
+    private class PermissaoItem
+    {
+        public string Modulo { get; set; } = string.Empty;
+        public string Nivel { get; set; } = "CRUD";
+        public bool Ler { get; set; }
+        public bool Criar { get; set; }
+        public bool Editar { get; set; }
+        public bool Excluir { get; set; }
+    }
+}

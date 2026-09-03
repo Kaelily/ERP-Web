@@ -1,0 +1,119 @@
+@page "/comercial/vendas"
+@inject ComercialService ComercialService
+@inject ISnackbar Snackbar
+
+<PageTitle>Pedidos de Venda - ERP Web Matrix</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
+            Pedidos de Venda
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Gestão de pedidos, aprovação comercial, reserva automática de estoque e faturamento.
+        </MudText>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Snackbar.Add("Criando novo pedido de venda...", Severity.Info))">
+            Novo Pedido
+        </MudButton>
+    </div>
+</div>
+
+<MudTable Items="@_pedidos" Dense="true" Hover="true" Striped="true" Elevation="2">
+    <HeaderContent>
+        <MudTh>Número</MudTh>
+        <MudTh>Cliente</MudTh>
+        <MudTh>Vendedor</MudTh>
+        <MudTh>Data Emissão</MudTh>
+        <MudTh>Previsão Entrega</MudTh>
+        <MudTh>Valor Total</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh Style="text-align: right;">Ações</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><strong>@context.Numero</strong></MudTd>
+        <MudTd>@context.ClienteNome</MudTd>
+        <MudTd>@(context.VendedorNome ?? "Vendedor Direto")</MudTd>
+        <MudTd>@context.DataEmissao.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd>@(context.DataPrevisaoEntrega?.ToString("dd/MM/yyyy") ?? "-")</MudTd>
+        <MudTd><strong style="color: var(--mud-palette-primary);">R$ @context.ValorTotal.ToString("N2")</strong></MudTd>
+        <MudTd>
+            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">
+                @context.Status
+            </MudChip>
+        </MudTd>
+        <MudTd Style="text-align: right;">
+            <MudTooltip Text="Visualizar Itens do Pedido">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary"
+                               OnClick="@(() => ViewItens(context))" />
+            </MudTooltip>
+            <MudTooltip Text="Gerar PDF / Espelho do Pedido">
+                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Default"
+                               OnClick="@(() => Snackbar.Add($"Gerando PDF para {context.Numero}...", Severity.Info))" />
+            </MudTooltip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<!-- MODAL COM OS ITENS DO PEDIDO -->
+<MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Itens do Pedido: @_selectedPedido?.Numero</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_selectedPedido?.Itens != null)
+        {
+            <MudTable Items="@_selectedPedido.Itens" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>Código</MudTh>
+                    <MudTh>Descrição do Produto</MudTh>
+                    <MudTh>Qtd</MudTh>
+                    <MudTh>Preço Unit.</MudTh>
+                    <MudTh>Total</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.ProdutoCodigo</MudTd>
+                    <MudTd>@context.ProdutoDescricao</MudTd>
+                    <MudTd>@context.Quantidade @context.Unidade</MudTd>
+                    <MudTd>R$ @context.PrecoUnitario.ToString("N2")</MudTd>
+                    <MudTd><strong>R$ @context.ValorTotal.ToString("N2")</strong></MudTd>
+                </RowTemplate>
+            </MudTable>
+            <div class="d-flex justify-end mt-4">
+                <MudText Typo="Typo.h6" Style="font-weight: 700;">Total: R$ @_selectedPedido.ValorTotal.ToString("N2")</MudText>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _dialogVisible = false)">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<PedidoVendaDto> _pedidos = new();
+    private PedidoVendaDto? _selectedPedido;
+    private bool _dialogVisible = false;
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pedidos = await ComercialService.GetPedidosAsync();
+    }
+
+    private Color GetStatusColor(StatusPedido status) => status switch
+    {
+        StatusPedido.Aprovado => Color.Success,
+        StatusPedido.Faturado => Color.Info,
+        StatusPedido.Orcamento => Color.Warning,
+        StatusPedido.Cancelado => Color.Error,
+        _ => Color.Default
+    };
+
+    private void ViewItens(PedidoVendaDto pedido)
+    {
+        _selectedPedido = pedido;
+        _dialogVisible = true;
+    }
+}
