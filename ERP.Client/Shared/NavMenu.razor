@@ -9,50 +9,50 @@
 
     <MudDivider Class="my-2" />
 
-    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Href="/" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
+    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Href="" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
         Dashboard Geral
     </MudNavLink>
 
     <!-- MÓDULO COMERCIAL -->
     <MudNavGroup Title="Comercial & CRM" Icon="@Icons.Material.Filled.Storefront" Expanded="true">
-        <MudNavLink Icon="@Icons.Material.Filled.Group" Href="/comercial/mailing" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
+        <MudNavLink Icon="@Icons.Material.Filled.Group" Href="comercial/mailing" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
             Mailing (Central)
         </MudNavLink>
-        <MudNavLink Icon="@Icons.Material.Filled.ViewKanban" Href="/comercial/crm" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
+        <MudNavLink Icon="@Icons.Material.Filled.ViewKanban" Href="comercial/crm" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
             CRM Kanban
         </MudNavLink>
-        <MudNavLink Icon="@Icons.Material.Filled.ShoppingCart" Href="/comercial/vendas" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
+        <MudNavLink Icon="@Icons.Material.Filled.ShoppingCart" Href="comercial/vendas" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Comercial))">
             Pedidos de Venda
         </MudNavLink>
     </MudNavGroup>
 
     <!-- MÓDULO ESTOQUE -->
     <MudNavGroup Title="Estoque & Materiais" Icon="@Icons.Material.Filled.Inventory2" Expanded="false">
-        <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/estoque/produtos" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Estoque))">
+        <MudNavLink Icon="@Icons.Material.Filled.Category" Href="estoque/produtos" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Estoque))">
             Produtos & Saldo
         </MudNavLink>
     </MudNavGroup>
 
     <!-- MÓDULO FINANCEIRO -->
     <MudNavGroup Title="Financeiro" Icon="@Icons.Material.Filled.AccountBalance" Expanded="false">
-        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/financeiro" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Financeiro))">
+        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="financeiro" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Financeiro))">
             Contas & Fluxo Caixa
         </MudNavLink>
     </MudNavGroup>
 
     <!-- MÓDULO FATURAMENTO -->
     <MudNavGroup Title="Faturamento Fiscal" Icon="@Icons.Material.Filled.Receipt" Expanded="false">
-        <MudNavLink Icon="@Icons.Material.Filled.Description" Href="/faturamento" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Faturamento))">
+        <MudNavLink Icon="@Icons.Material.Filled.Description" Href="faturamento" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Faturamento))">
             Notas Fiscais (NF-e)
         </MudNavLink>
     </MudNavGroup>
 
     <!-- MÓDULO SISTEMA / ADMIN -->
     <MudNavGroup Title="Administração" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="false">
-        <MudNavLink Icon="@Icons.Material.Filled.Security" Href="/sistema/rbac" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Sistema))">
+        <MudNavLink Icon="@Icons.Material.Filled.Security" Href="sistema/rbac" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Sistema))">
             Perfis e RBAC
         </MudNavLink>
-        <MudNavLink Icon="@Icons.Material.Filled.History" Href="/sistema/audit" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Sistema))">
+        <MudNavLink Icon="@Icons.Material.Filled.History" Href="sistema/audit" OnClick="@(() => ModuleState.SetActiveModule(ModuloSistema.Sistema))">
             Audit Trail (Logs)
         </MudNavLink>
     </MudNavGroup>
