@@ -95,9 +95,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ERP Web API",
+        Title = "Azurra System API",
         Version = "v1.0",
-        Description = "API RESTful do ERP Web (Blazor WebAssembly + MudBlazor + Clean Architecture)"
+        Description = "API RESTful do Azurra System (Blazor WebAssembly + MudBlazor + Clean Architecture)"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

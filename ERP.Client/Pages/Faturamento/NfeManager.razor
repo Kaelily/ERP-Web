@@ -1,21 +1,21 @@
 @page "/faturamento"
 @inject ISnackbar Snackbar
 
-<PageTitle>Gerenciador Fiscal de NF-e - ERP Web Matrix</PageTitle>
+<PageTitle>Gerenciador Fiscal de NF-e - Azurra System</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
     <div>
         <MudText Typo="Typo.h5" Style="font-weight: 700; font-family: 'Outfit', sans-serif;">
-            Faturamento Fiscal & Gerenciamento de NF-e / NFS-e
+            Faturamento & Emissão de NF-e
         </MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Emissão eletrônica, transmissão direta via SEFAZ, DANFE em PDF e Reforma Tributária (IBS/CBS 2026).
+            Integração direta com SEFAZ para emissão, consulta e cancelamento de Notas Fiscais Eletrônicas.
         </MudText>
     </div>
     <div class="d-flex gap-2">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Send"
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                    OnClick="@(() => Snackbar.Add("Iniciando emissão de nova NF-e...", Severity.Info))">
-            Emitir NF-e
+            Nova NF-e
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.CloudDone"
                    OnClick="@(() => Snackbar.Add("SEFAZ Nacional: Serviços Operando Normalmente (Status 100)", Severity.Success))">
@@ -25,7 +25,7 @@
 </div>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    <strong>Reforma Tributária 2026:</strong> O ERP Web já suporta os novos campos e cálculos de alíquotas de IBS (Imposto sobre Bens e Serviços) e CBS (Contribuição sobre Bens e Serviços).
+    <strong>Reforma Tributária 2026:</strong> O Azurra System já suporta os novos campos e cálculos de alíquotas de IBS (Imposto sobre Bens e Serviços) e CBS (Contribuição sobre Bens e Serviços).
 </MudAlert>
 
 <MudTable Items="@_notas" Dense="true" Hover="true" Striped="true" Elevation="2">
