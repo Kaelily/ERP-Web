@@ -22,27 +22,27 @@
             <div class="d-none d-md-flex align-center ml-6 gap-1">
                 <MudChip T="string" Color="@(ModuleState.ActiveModule == ModuloSistema.Comercial ? Color.Primary : Color.Default)"
                          Variant="@(ModuleState.ActiveModule == ModuloSistema.Comercial ? Variant.Filled : Variant.Text)"
-                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Comercial, "/comercial/mailing"))">
+                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Comercial, "comercial/mailing"))">
                     Comercial
                 </MudChip>
                 <MudChip T="string" Color="@(ModuleState.ActiveModule == ModuloSistema.Estoque ? Color.Primary : Color.Default)"
                          Variant="@(ModuleState.ActiveModule == ModuloSistema.Estoque ? Variant.Filled : Variant.Text)"
-                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Estoque, "/estoque/produtos"))">
+                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Estoque, "estoque/produtos"))">
                     Estoque
                 </MudChip>
                 <MudChip T="string" Color="@(ModuleState.ActiveModule == ModuloSistema.Financeiro ? Color.Primary : Color.Default)"
                          Variant="@(ModuleState.ActiveModule == ModuloSistema.Financeiro ? Variant.Filled : Variant.Text)"
-                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Financeiro, "/financeiro"))">
+                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Financeiro, "financeiro"))">
                     Financeiro
                 </MudChip>
                 <MudChip T="string" Color="@(ModuleState.ActiveModule == ModuloSistema.Faturamento ? Color.Primary : Color.Default)"
                          Variant="@(ModuleState.ActiveModule == ModuloSistema.Faturamento ? Variant.Filled : Variant.Text)"
-                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Faturamento, "/faturamento"))">
+                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Faturamento, "faturamento"))">
                     Faturamento
                 </MudChip>
                 <MudChip T="string" Color="@(ModuleState.ActiveModule == ModuloSistema.Sistema ? Color.Primary : Color.Default)"
                          Variant="@(ModuleState.ActiveModule == ModuloSistema.Sistema ? Variant.Filled : Variant.Text)"
-                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Sistema, "/sistema/rbac"))">
+                         Size="Size.Small" OnClick="@(() => SetModule(ModuloSistema.Sistema, "sistema/rbac"))">
                     Sistema
                 </MudChip>
             </div>
@@ -52,7 +52,7 @@
             <!-- AÇÕES DO TOPO -->
             <MudTooltip Text="Alternar Tema Claro / Escuro">
                 <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                               Color="Color.Inherit" OnClick="@(() => _isDarkMode = !_isDarkMode)" />
+                                Color="Color.Inherit" OnClick="@(() => _isDarkMode = !_isDarkMode)" />
             </MudTooltip>
 
             <MudTooltip Text="Notificações em Tempo Real">
@@ -66,7 +66,7 @@
                 <ActivatorContent>
                     <div class="d-flex align-center gap-2 cursor-pointer ml-2">
                         <MudAvatar Color="Color.Primary" Size="Size.Small">
-                            @AuthService.CurrentUser.Nome.Substring(0, 1)
+                            @(string.IsNullOrWhiteSpace(AuthService.CurrentUser?.Nome) ? "A" : AuthService.CurrentUser.Nome[..1].ToUpper())
                         </MudAvatar>
                         <div class="d-none d-sm-block text-left" style="line-height: 1.1;">
                             <MudText Typo="Typo.caption" Style="font-weight: 600;">@AuthService.CurrentUser.Nome</MudText>
@@ -80,7 +80,7 @@
                 </ActivatorContent>
                 <ChildContent>
                     <MudMenuItem Icon="@Icons.Material.Filled.Person">Meu Perfil</MudMenuItem>
-                    <MudMenuItem Icon="@Icons.Material.Filled.Security" OnClick="@(() => Nav.NavigateTo("/sistema/rbac"))">Permissões</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Security" OnClick="@(() => Nav.NavigateTo("sistema/rbac"))">Permissões</MudMenuItem>
                     <MudDivider />
                     <MudMenuItem Icon="@Icons.Material.Filled.Logout" IconColor="Color.Error" OnClick="HandleLogout">
                         Sair (Logout)

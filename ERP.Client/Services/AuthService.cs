@@ -170,6 +170,18 @@ public class AuthService : IAuthService
             return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
+        if (_accessToken.StartsWith("demo_"))
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, _currentUser?.Id.ToString() ?? "1"),
+                new Claim(ClaimTypes.Name, _currentUser?.Nome ?? "Administrador Geral"),
+                new Claim(ClaimTypes.Email, _currentUser?.Email ?? "admin@azurra.com.br"),
+                new Claim(ClaimTypes.Role, _currentUser?.PerfilNome ?? "Administrador")
+            };
+            return new ClaimsPrincipal(new ClaimsIdentity(claims, "demo"));
+        }
+
         try
         {
             var handler = new JwtSecurityTokenHandler();

@@ -28,10 +28,22 @@
     </div>
 
     <div id="blazor-error-ui">
-        Ocorreu um erro não tratado na aplicação.
+        <span id="blazor-error-msg">Ocorreu um erro não tratado na aplicação.</span>
         <a href="." class="reload">Recarregar</a>
         <span class="dismiss">🗙</span>
     </div>
+    <script>
+        window.addEventListener('error', function (e) {
+            var msg = (e.message || e.error) + (e.filename ? (' (' + e.filename + ':' + e.lineno + ')') : '');
+            var el = document.getElementById('blazor-error-msg');
+            if (el) el.innerText = 'Erro: ' + msg;
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+            var reason = e.reason ? (e.reason.message || e.reason.stack || e.reason) : 'Promessa rejeitada';
+            var el = document.getElementById('blazor-error-msg');
+            if (el) el.innerText = 'Erro: ' + reason;
+        });
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
