@@ -1,0 +1,35 @@
+name: Deploy Azurra System to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish Blazor WebAssembly
+        run: dotnet publish ERP.Client/ERP.Client.csproj -c Release -o release
+
+      - name: Add .nojekyll & 404.html for GitHub Pages SPA
+        run: |
+          touch release/wwwroot/.nojekyll
+          cp release/wwwroot/index.html release/wwwroot/404.html
+
+      - name: Deploy to gh-pages Branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: release/wwwroot
+          branch: gh-pages
