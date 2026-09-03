@@ -37,50 +37,50 @@ public class SignalRNotificationService : IAsyncDisposable
 
     public async Task StartAsync()
     {
-        if (_hubConnection != null) return;
-
-        var hubUrl = _nav.ToAbsoluteUri("/hub/notifications");
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        _hubConnection.On<string, string, string, DateTime>("ReceiveNotification", (user, msg, type, date) =>
-        {
-            OnNotificationReceived?.Invoke(user, msg, type);
-        });
-
-        _hubConnection.On<int, string, DateTime>("MailingUpdated", (id, action, date) =>
-        {
-            OnMailingUpdated?.Invoke(id, action);
-        });
-
-        _hubConnection.Reconnecting += _ =>
-        {
-            OnConnectionStatusChanged?.Invoke();
-            return Task.CompletedTask;
-        };
-
-        _hubConnection.Reconnected += _ =>
-        {
-            OnConnectionStatusChanged?.Invoke();
-            return Task.CompletedTask;
-        };
-
-        _hubConnection.Closed += _ =>
-        {
-            OnConnectionStatusChanged?.Invoke();
-            return Task.CompletedTask;
-        };
-
         try
         {
+            if (_hubConnection != null) return;
+
+            var hubUrl = _nav.ToAbsoluteUri("hub/notifications");
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(hubUrl)
+                .WithAutomaticReconnect()
+                .Build();
+
+            _hubConnection.On<string, string, string, DateTime>("ReceiveNotification", (user, msg, type, date) =>
+            {
+                OnNotificationReceived?.Invoke(user, msg, type);
+            });
+
+            _hubConnection.On<int, string, DateTime>("MailingUpdated", (id, action, date) =>
+            {
+                OnMailingUpdated?.Invoke(id, action);
+            });
+
+            _hubConnection.Reconnecting += _ =>
+            {
+                OnConnectionStatusChanged?.Invoke();
+                return Task.CompletedTask;
+            };
+
+            _hubConnection.Reconnected += _ =>
+            {
+                OnConnectionStatusChanged?.Invoke();
+                return Task.CompletedTask;
+            };
+
+            _hubConnection.Closed += _ =>
+            {
+                OnConnectionStatusChanged?.Invoke();
+                return Task.CompletedTask;
+            };
+
             await _hubConnection.StartAsync();
             OnConnectionStatusChanged?.Invoke();
         }
         catch
         {
-            // Server might not be started yet or offline
+            // Silently swallow SignalR connection failures (e.g. static GitHub Pages hosting)
         }
     }
 

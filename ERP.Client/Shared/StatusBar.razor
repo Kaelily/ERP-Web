@@ -51,13 +51,13 @@
         _timer = new System.Threading.Timer(_ =>
         {
             _currentTime = DateTime.Now;
-            InvokeAsync(StateHasChanged);
+            try { InvokeAsync(StateHasChanged); } catch { }
         }, null, 1000, 1000);
     }
 
     private void OnStatusChanged()
     {
-        InvokeAsync(StateHasChanged);
+        try { InvokeAsync(StateHasChanged); } catch { }
     }
 
     public void Dispose()

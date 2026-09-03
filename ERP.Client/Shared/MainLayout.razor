@@ -123,8 +123,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Start SignalR background listener
-        await SignalRService.StartAsync();
+        try
+        {
+            await SignalRService.StartAsync();
+        }
+        catch { }
     }
 
     private void SetModule(ModuloSistema modulo, string route)
