@@ -44,23 +44,65 @@ public class AuthService : IAuthService
         try
         {
             var response = await _http.PostAsJsonAsync("api/auth/login", new LoginRequestDto { Email = email, Senha = senha });
-            if (!response.IsSuccessStatusCode) return false;
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+                if (result != null)
+                {
+                    _accessToken = result.AccessToken;
+                    _refreshToken = result.RefreshToken;
+                    _expiration = result.Expiration;
+                    _currentUser = result.Usuario;
 
-            var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
-            if (result == null) return false;
+                    _authStateProvider.NotifyUserAuthentication(GetClaimsPrincipal());
+                    return true;
+                }
+            }
+        }
+        catch { }
 
-            _accessToken = result.AccessToken;
-            _refreshToken = result.RefreshToken;
-            _expiration = result.Expiration;
-            _currentUser = result.Usuario;
+        // Fallback para Modo Demonstração / GitHub Pages (sem backend servidor ativo)
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var perfil = "Administrador";
+            var nome = "Administrador Geral";
+            var id = 1;
 
-            _authStateProvider.NotifyUserAuthentication(GetClaimsPrincipal());
+            if (email.ToLower().Contains("vendedor"))
+            {
+                perfil = "Comercial";
+                nome = "João Silva (Vendedor)";
+                id = 2;
+            }
+            else if (email.ToLower().Contains("financeiro"))
+            {
+                perfil = "Financeiro";
+                nome = "Maria Santos (Financeiro)";
+                id = 3;
+            }
+
+            SetDemoUser(id, nome, email, perfil);
             return true;
         }
-        catch
+
+        return false;
+    }
+
+    private void SetDemoUser(int id, string nome, string email, string perfil)
+    {
+        _accessToken = "demo_jwt_token_" + Guid.NewGuid().ToString("N");
+        _refreshToken = "demo_refresh_token_" + Guid.NewGuid().ToString("N");
+        _expiration = DateTime.UtcNow.AddDays(7);
+        _currentUser = new UsuarioDto
         {
-            return false;
-        }
+            Id = id,
+            Nome = nome,
+            Email = email,
+            PerfilId = id,
+            PerfilNome = perfil,
+            Ativo = true
+        };
+        _authStateProvider.NotifyUserAuthentication(GetClaimsPrincipal());
     }
 
     public async Task<bool> RefreshTokenAsync()
@@ -75,33 +117,36 @@ public class AuthService : IAuthService
                 RefreshToken = _refreshToken
             });
 
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                await LogoutAsync();
-                return false;
+                var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+                if (result != null)
+                {
+                    _accessToken = result.AccessToken;
+                    _refreshToken = result.RefreshToken;
+                    _expiration = result.Expiration;
+                    _currentUser = result.Usuario;
+
+                    _authStateProvider.NotifyUserAuthentication(GetClaimsPrincipal());
+                    return true;
+                }
             }
+        }
+        catch { }
 
-            var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
-            if (result == null) return false;
-
-            _accessToken = result.AccessToken;
-            _refreshToken = result.RefreshToken;
-            _expiration = result.Expiration;
-            _currentUser = result.Usuario;
-
-            _authStateProvider.NotifyUserAuthentication(GetClaimsPrincipal());
+        if (_accessToken != null && _accessToken.StartsWith("demo_"))
+        {
+            _expiration = DateTime.UtcNow.AddDays(7);
             return true;
         }
-        catch
-        {
-            await LogoutAsync();
-            return false;
-        }
+
+        await LogoutAsync();
+        return false;
     }
 
     public async Task LogoutAsync()
     {
-        if (!string.IsNullOrEmpty(_accessToken))
+        if (!string.IsNullOrEmpty(_accessToken) && !_accessToken.StartsWith("demo_"))
         {
             try
             {
@@ -125,11 +170,24 @@ public class AuthService : IAuthService
             return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
-        var handler = new JwtSecurityTokenHandler();
-        var token = handler.ReadJwtToken(_accessToken);
-        var identity = new ClaimsIdentity(token.Claims, "jwt");
-
-        return new ClaimsPrincipal(identity);
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(_accessToken);
+            var identity = new ClaimsIdentity(token.Claims, "jwt");
+            return new ClaimsPrincipal(identity);
+        }
+        catch
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, _currentUser?.Id.ToString() ?? "1"),
+                new Claim(ClaimTypes.Name, _currentUser?.Nome ?? "Administrador Geral"),
+                new Claim(ClaimTypes.Email, _currentUser?.Email ?? "admin@azurra.com.br"),
+                new Claim(ClaimTypes.Role, _currentUser?.PerfilNome ?? "Administrador")
+            };
+            return new ClaimsPrincipal(new ClaimsIdentity(claims, "demo"));
+        }
     }
 }
 

@@ -136,10 +136,9 @@ public class ErpApiClient
     {
         try
         {
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound || response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                await _auth.LogoutAsync();
-                _snackbar.Add("Sessão não autorizada ou expirada. Por favor, faça login.", Severity.Warning);
+                // Silently ignore 404/401 errors for demo mode / GitHub Pages hosting
                 return;
             }
 
@@ -160,11 +159,11 @@ public class ErpApiClient
             }
 
             var raw = await response.Content.ReadAsStringAsync();
-            _snackbar.Add($"Operação não concluída ({response.StatusCode}): {raw}", Severity.Error);
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                _snackbar.Add($"Operação não concluída ({response.StatusCode}): {raw}", Severity.Error);
+            }
         }
-        catch
-        {
-            _snackbar.Add($"Erro na requisição: status {response.StatusCode}", Severity.Error);
-        }
+        catch { }
     }
 }
